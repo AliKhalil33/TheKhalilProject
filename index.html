@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="true" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Khalil Project" />
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%23000' width='180' height='180' rx='40'/><text x='90' y='100' font-size='120' text-anchor='middle' dominant-baseline='central' fill='%23fff'>💪</text></svg>" />
   <title>The Khalil Project</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -16,7 +20,7 @@
     body {
       background: #ffffff;
       color: #000000;
-      font-family: "Times New Roman", serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       min-height: 100vh;
       padding: env(safe-area-inset-top) 18px env(safe-area-inset-bottom) 18px;
       display: flex;
@@ -37,8 +41,8 @@
 
     .title h1 {
       font-size: 2.2rem;
-      font-weight: 400;
-      letter-spacing: 1px;
+      font-weight: 600;
+      letter-spacing: -0.5px;
     }
 
     .title p {
@@ -67,22 +71,22 @@
     }
 
     .card {
-      border: 1px solid #d9d9d9;
-      border-radius: 26px;
+      border: none;
+      border-radius: 16px;
       padding: 24px;
-      background: #fff;
+      background: #f5f5f7;
       transition: 0.15s ease;
       cursor: pointer;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
     }
 
     .card:active {
-      transform: scale(0.985);
+      opacity: 0.7;
+      transform: scale(0.98);
     }
 
     .card h2 {
       font-size: 1.5rem;
-      font-weight: 400;
+      font-weight: 600;
       margin-bottom: 6px;
     }
 
@@ -96,33 +100,39 @@
       align-items: center;
       justify-content: space-between;
       margin-bottom: 20px;
+      gap: 8px;
     }
 
-    .back-btn,
-    .add-btn,
-    .secondary-btn,
-    .save-btn,
-    .delete-btn {
+    button {
       border: none;
       background: #000;
       color: #fff;
       padding: 10px 16px;
-      border-radius: 999px;
-      font-family: "Times New Roman", serif;
+      border-radius: 10px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       font-size: 0.95rem;
+      font-weight: 500;
       cursor: pointer;
+      transition: 0.15s ease;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    button:active {
+      opacity: 0.7;
+      transform: scale(0.95);
     }
 
     .secondary-btn {
-      background: #f3f3f3;
+      background: #f3f3f7;
       color: #000;
-      border: 1px solid #d8d8d8;
+      border: none;
     }
 
     .delete-btn {
       background: #fff;
       color: #000;
-      border: 1px solid #000;
+      border: 1px solid #d8d8d8;
     }
 
     .workout-list {
@@ -132,42 +142,103 @@
     }
 
     .exercise-card {
-      border: 1px solid #e1e1e1;
-      border-radius: 24px;
+      border: none;
+      border-radius: 16px;
       padding: 20px;
-      background: #fff;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+      background: #f5f5f7;
       cursor: pointer;
+      transition: 0.15s ease;
+    }
+
+    .exercise-card:active {
+      opacity: 0.7;
     }
 
     .exercise-card h3 {
       font-size: 1.25rem;
-      font-weight: 400;
-      margin-bottom: 6px;
+      font-weight: 600;
+      margin-bottom: 12px;
     }
 
-    .exercise-card p {
-      opacity: 0.55;
+    .pr-display {
+      background: #fff;
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      border: 1px solid #efefef;
+    }
+
+    .pr-label {
+      font-size: 0.8rem;
+      opacity: 0.5;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .pr-value {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #000;
+    }
+
+    .pr-details {
+      font-size: 0.85rem;
+      opacity: 0.6;
+      margin-top: 4px;
+    }
+
+    .last-volume {
+      font-size: 0.95rem;
+      opacity: 0.6;
     }
 
     .section-title {
       font-size: 1.2rem;
       margin-bottom: 16px;
-      font-weight: 400;
+      font-weight: 600;
     }
 
     .history-card {
-      border: 1px solid #ececec;
-      border-radius: 22px;
-      padding: 18px;
-      margin-bottom: 12px;
-      background: #fff;
+      border: none;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 10px;
+      background: #f5f5f7;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .history-left {
+      flex: 1;
     }
 
     .history-date {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       opacity: 0.5;
-      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-bottom: 6px;
+    }
+
+    .history-detail {
+      font-size: 0.95rem;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+
+    .history-volume {
+      text-align: right;
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .history-volume-label {
+      font-size: 0.75rem;
+      opacity: 0.5;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
     }
 
     .set-row {
@@ -180,13 +251,17 @@
     input {
       width: 100%;
       padding: 14px;
-      border-radius: 16px;
+      border-radius: 10px;
       border: 1px solid #d9d9d9;
       background: #fff;
       color: #000;
-      font-family: "Times New Roman", serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       font-size: 1rem;
       outline: none;
+    }
+
+    input:focus {
+      border-color: #000;
     }
 
     .input-group {
@@ -198,6 +273,7 @@
       margin-bottom: 8px;
       opacity: 0.7;
       font-size: 0.95rem;
+      font-weight: 500;
     }
 
     .button-row {
@@ -208,11 +284,34 @@
     }
 
     .chart-container {
+      display: none;
       margin-top: 24px;
       padding: 18px;
-      border: 1px solid #ececec;
-      border-radius: 24px;
-      background: #fff;
+      border: none;
+      border-radius: 16px;
+      background: #f5f5f7;
+    }
+
+    .chart-container.active {
+      display: block;
+    }
+
+    .chart-toggle-btn {
+      background: #000;
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: none;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: 0.15s ease;
+    }
+
+    .chart-toggle-btn:active {
+      opacity: 0.7;
+      transform: scale(0.95);
     }
 
     .empty-state {
@@ -223,8 +322,8 @@
     }
 
     .small-text {
-      opacity: 0.55;
-      font-size: 0.92rem;
+      opacity: 0.6;
+      font-size: 0.95rem;
       line-height: 1.4;
     }
 
@@ -241,8 +340,9 @@
 
       .card,
       .exercise-card,
-      .history-card {
-        border-radius: 22px;
+      .history-card,
+      .chart-container {
+        border-radius: 14px;
       }
     }
   </style>
@@ -277,7 +377,7 @@
     <div id="splitScreen" class="screen">
       <div class="top-bar">
         <button class="secondary-btn" onclick="goHome()">Back</button>
-        <button class="add-btn" onclick="showAddWorkout()">Add Workout</button>
+        <button class="add-btn" onclick="showAddWorkout()">+ Add</button>
       </div>
 
       <h2 id="splitTitle" class="section-title"></h2>
@@ -288,12 +388,14 @@
     <div id="exerciseScreen" class="screen">
       <div class="top-bar">
         <button class="secondary-btn" onclick="backToSplit()">Back</button>
-        <button class="add-btn" onclick="addSetRow()">Add Set</button>
+        <button class="add-btn" onclick="addSetRow()">+ Set</button>
       </div>
 
       <h2 id="exerciseTitle" class="section-title"></h2>
 
       <div class="small-text" id="latestVolume"></div>
+
+      <div id="prDisplay" style="margin-top: 12px; margin-bottom: 16px;"></div>
 
       <div class="divider"></div>
 
@@ -305,7 +407,12 @@
         <button class="save-btn" onclick="saveWorkoutEntry()">Save Entry</button>
       </div>
 
-      <div class="chart-container">
+      <div style="margin-top: 16px; margin-bottom: 16px; text-align: center;">
+        <button class="chart-toggle-btn" onclick="toggleChart()">View Progression</button>
+      </div>
+
+      <div class="chart-container" id="chartContainer">
+        <button class="chart-toggle-btn" onclick="toggleChart()" style="width: 100%; margin-bottom: 16px;">Hide Progression</button>
         <h3 class="section-title">Progression</h3>
         <canvas id="progressChart"></canvas>
       </div>
@@ -343,19 +450,19 @@
 
     const defaultData = {
       Push: [
-        { name: 'Bench Press', entries: [] },
-        { name: 'Incline Dumbbell Press', entries: [] },
-        { name: 'Shoulder Press', entries: [] }
+        { name: 'Bench Press', entries: [], pr: { volume: 0, sets: 0, reps: 0, weight: 0 } },
+        { name: 'Incline Dumbbell Press', entries: [], pr: { volume: 0, sets: 0, reps: 0, weight: 0 } },
+        { name: 'Shoulder Press', entries: [], pr: { volume: 0, sets: 0, reps: 0, weight: 0 } }
       ],
       Pull: [
-        { name: 'Lat Pulldown', entries: [] },
-        { name: 'Barbell Row', entries: [] },
-        { name: 'Hammer Curl', entries: [] }
+        { name: 'Lat Pulldown', entries: [], pr: { volume: 0, sets: 0, reps: 0, weight: 0 } },
+        { name: 'Barbell Row', entries: [], pr: { volume: 0, sets: 0, reps: 0, weight: 0 } },
+        { name: 'Hammer Curl', entries: [], pr: { volume: 0, sets: 0, reps: 0, weight: 0 } }
       ],
       Legs: [
-        { name: 'Leg Press', entries: [] },
-        { name: 'Romanian Deadlift', entries: [] },
-        { name: 'Leg Extension', entries: [] }
+        { name: 'Leg Press', entries: [], pr: { volume: 0, sets: 0, reps: 0, weight: 0 } },
+        { name: 'Romanian Deadlift', entries: [], pr: { volume: 0, sets: 0, reps: 0, weight: 0 } },
+        { name: 'Leg Extension', entries: [], pr: { volume: 0, sets: 0, reps: 0, weight: 0 } }
       ]
     };
 
@@ -379,6 +486,16 @@
       document.getElementById(id).classList.add('active');
     }
 
+    function toggleChart() {
+      const chartContainer = document.getElementById('chartContainer');
+      chartContainer.classList.toggle('active');
+      if (chartContainer.classList.contains('active')) {
+        setTimeout(() => {
+          renderChart();
+        }, 100);
+      }
+    }
+
     function openSplit(split) {
       currentSplit = split;
       document.getElementById('splitTitle').textContent = split + ' Workouts';
@@ -393,16 +510,29 @@
 
       data[currentSplit].forEach(workout => {
         const lastEntry = workout.entries[workout.entries.length - 1];
+        const currentPR = workout.pr;
 
         const card = document.createElement('div');
         card.className = 'exercise-card';
         card.onclick = () => openExercise(workout.name);
 
+        let prHtml = '';
+        if (currentPR && currentPR.volume > 0) {
+          prHtml = `
+            <div class="pr-display">
+              <div class="pr-label">Personal Record</div>
+              <div class="pr-value">${currentPR.weight} lbs</div>
+              <div class="pr-details">${currentPR.sets}×${currentPR.reps} • ${currentPR.volume.toLocaleString()} vol</div>
+            </div>
+          `;
+        }
+
         card.innerHTML = `
+          ${prHtml}
           <h3>${workout.name}</h3>
-          <p>
+          <p class="last-volume">
             ${lastEntry
-              ? `Last Volume: ${calculateVolume(lastEntry.sets).toLocaleString()}`
+              ? `Last: ${calculateVolume(lastEntry.sets).toLocaleString()} lbs`
               : 'No entries yet'}
           </p>
         `;
@@ -415,12 +545,32 @@
       currentExercise = name;
       document.getElementById('exerciseTitle').textContent = name;
       document.getElementById('setContainer').innerHTML = '';
+      document.getElementById('chartContainer').classList.remove('active');
 
       addSetRow();
+      renderPRDisplay();
       renderHistory();
-      renderChart();
 
       showScreen('exerciseScreen');
+    }
+
+    function renderPRDisplay() {
+      const data = getData();
+      const exercise = data[currentSplit].find(w => w.name === currentExercise);
+      const container = document.getElementById('prDisplay');
+
+      if (!exercise.pr || exercise.pr.volume === 0) {
+        container.innerHTML = '';
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="pr-display">
+          <div class="pr-label">Personal Record</div>
+          <div class="pr-value">${exercise.pr.weight} lbs</div>
+          <div class="pr-details">${exercise.pr.sets}×${exercise.pr.reps} • ${exercise.pr.volume.toLocaleString()} vol</div>
+        </div>
+      `;
     }
 
     function addSetRow() {
@@ -458,6 +608,20 @@
 
       const data = getData();
       const exercise = data[currentSplit].find(w => w.name === currentExercise);
+      const volume = calculateVolume({ sets });
+
+      // Update PR if this volume is heavier (highest single set weight)
+      const maxWeight = Math.max(...sets.map(s => s.weight));
+      const maxWeightSet = sets.find(s => s.weight === maxWeight);
+
+      if (!exercise.pr || volume > exercise.pr.volume) {
+        exercise.pr = {
+          volume: volume,
+          sets: maxWeightSet.sets,
+          reps: maxWeightSet.reps,
+          weight: maxWeightSet.weight
+        };
+      }
 
       exercise.entries.unshift({
         date: new Date().toLocaleDateString(),
@@ -470,8 +634,8 @@
       document.getElementById('setContainer').innerHTML = '';
       addSetRow();
 
+      renderPRDisplay();
       renderHistory();
-      renderChart();
       renderWorkoutList();
     }
 
@@ -490,37 +654,33 @@
       }
 
       const latestVolume = calculateVolume(exercise.entries[0].sets);
-      latestText.textContent = `Latest Volume: ${latestVolume.toLocaleString()}`;
+      latestText.textContent = `Latest Volume: ${latestVolume.toLocaleString()} lbs`;
 
       exercise.entries.forEach(entry => {
         const volume = calculateVolume(entry.sets);
+        const maxWeight = Math.max(...entry.sets.map(s => s.weight));
+        const maxWeightSet = entry.sets.find(s => s.weight === maxWeight);
 
         const card = document.createElement('div');
         card.className = 'history-card';
 
-        let setsHtml = '';
-
-        entry.sets.forEach((set, index) => {
-          setsHtml += `
-            <p>
-              Set ${index + 1}: ${set.sets} × ${set.reps} @ ${set.weight} lbs
-            </p>
-          `;
-        });
-
         card.innerHTML = `
-          <div class="history-date">${entry.date}</div>
-          ${setsHtml}
-          <br>
-          <strong>Total Volume: ${volume.toLocaleString()}</strong>
+          <div class="history-left">
+            <div class="history-date">${entry.date}</div>
+            <div class="history-detail">${maxWeightSet.sets}×${maxWeightSet.reps} @ ${maxWeightSet.weight} lbs</div>
+          </div>
+          <div class="history-volume">
+            <div class="history-volume-label">VOL</div>
+            <div>${volume.toLocaleString()}</div>
+          </div>
         `;
 
         container.appendChild(card);
       });
     }
 
-    function calculateVolume(sets) {
-      return sets.reduce((total, set) => {
+    function calculateVolume(entry) {
+      return entry.sets.reduce((total, set) => {
         return total + (set.sets * set.reps * set.weight);
       }, 0);
     }
@@ -532,8 +692,11 @@
 
       const entries = [...exercise.entries].reverse();
 
-      const labels = entries.map(entry => entry.date);
-      const volumes = entries.map(entry => calculateVolume(entry.sets));
+      const labels = entries.map(entry => {
+        const date = new Date(entry.timestamp);
+        return (date.getMonth() + 1) + '/' + date.getDate();
+      });
+      const volumes = entries.map(entry => calculateVolume(entry));
 
       if (chartInstance) {
         chartInstance.destroy();
@@ -546,15 +709,19 @@
           datasets: [{
             data: volumes,
             borderColor: '#000000',
-            backgroundColor: 'rgba(0,0,0,0.05)',
-            tension: 0.35,
-            borderWidth: 2,
+            backgroundColor: 'rgba(0,0,0,0.08)',
+            tension: 0.3,
+            borderWidth: 2.5,
             fill: true,
-            pointRadius: 3
+            pointRadius: 4,
+            pointBackgroundColor: '#000000',
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 2
           }]
         },
         options: {
           responsive: true,
+          maintainAspectRatio: true,
           plugins: {
             legend: {
               display: false
@@ -565,7 +732,8 @@
               ticks: {
                 color: '#666',
                 font: {
-                  family: 'Times New Roman'
+                  family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                  size: 12
                 }
               },
               grid: {
@@ -573,14 +741,17 @@
               }
             },
             y: {
+              beginAtZero: true,
               ticks: {
                 color: '#666',
                 font: {
-                  family: 'Times New Roman'
+                  family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                  size: 12
                 }
               },
               grid: {
-                color: '#efefef'
+                color: '#f0f0f0',
+                drawBorder: false
               }
             }
           }
@@ -602,7 +773,8 @@
 
       data[currentSplit].push({
         name,
-        entries: []
+        entries: [],
+        pr: { volume: 0, sets: 0, reps: 0, weight: 0 }
       });
 
       saveData(data);
