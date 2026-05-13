@@ -129,18 +129,13 @@
       border: none;
     }
 
-    .delete-btn {
-      background: #fff;
-      color: #000;
-      border: 1px solid #d8d8d8;
-    }
-
     .edit-btn {
       background: #f3f3f7;
       color: #000;
       border: none;
       padding: 8px 12px;
       font-size: 0.85rem;
+      flex: 1;
     }
 
     .delete-history-btn {
@@ -149,6 +144,7 @@
       border: none;
       padding: 8px 12px;
       font-size: 0.85rem;
+      flex: 1;
     }
 
     .cancel-btn {
@@ -249,7 +245,7 @@
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 8px;
+      margin-bottom: 12px;
     }
 
     .history-left {
@@ -272,8 +268,6 @@
 
     .history-volume {
       text-align: right;
-      font-weight: 600;
-      font-size: 1.1rem;
     }
 
     .history-volume-label {
@@ -281,6 +275,11 @@
       opacity: 0.5;
       text-transform: uppercase;
       letter-spacing: 0.3px;
+    }
+
+    .history-volume-value {
+      font-weight: 600;
+      font-size: 1.1rem;
     }
 
     .history-buttons {
@@ -331,6 +330,11 @@
       gap: 10px;
       margin-top: 16px;
       flex-wrap: wrap;
+    }
+
+    .button-row button {
+      flex: 1;
+      min-width: 120px;
     }
 
     .chart-container {
@@ -407,17 +411,17 @@
 
     <div id="homeScreen" class="screen active">
       <div class="split-grid">
-        <div class="card" onclick="openSplit('Push')">
+        <div class="card" onclick="app.openSplit('Push')">
           <h2>Push</h2>
           <p>Chest · Shoulders · Triceps</p>
         </div>
 
-        <div class="card" onclick="openSplit('Pull')">
+        <div class="card" onclick="app.openSplit('Pull')">
           <h2>Pull</h2>
           <p>Back · Biceps · Rear Delts</p>
         </div>
 
-        <div class="card" onclick="openSplit('Legs')">
+        <div class="card" onclick="app.openSplit('Legs')">
           <h2>Legs</h2>
           <p>Quads · Hamstrings · Calves</p>
         </div>
@@ -426,8 +430,8 @@
 
     <div id="splitScreen" class="screen">
       <div class="top-bar">
-        <button class="secondary-btn" onclick="goHome()">Back</button>
-        <button class="add-btn" onclick="showAddWorkout()">+ Add</button>
+        <button class="secondary-btn" onclick="app.goHome()">Back</button>
+        <button onclick="app.showAddWorkout()">+ Add</button>
       </div>
 
       <h2 id="splitTitle" class="section-title"></h2>
@@ -437,8 +441,8 @@
 
     <div id="exerciseScreen" class="screen">
       <div class="top-bar">
-        <button class="secondary-btn" onclick="backToSplit()">Back</button>
-        <button class="add-btn" onclick="addSetRow()">+ Set</button>
+        <button class="secondary-btn" onclick="app.backToSplit()">Back</button>
+        <button onclick="app.addSetRow()">+ Set</button>
       </div>
 
       <h2 id="exerciseTitle" class="section-title"></h2>
@@ -454,15 +458,15 @@
       <div id="setContainer"></div>
 
       <div class="button-row" id="formButtons">
-        <button class="save-btn" onclick="saveWorkoutEntry()">Save Entry</button>
+        <button onclick="app.saveWorkoutEntry()">Save Entry</button>
       </div>
 
       <div style="margin-top: 16px; margin-bottom: 16px; text-align: center;">
-        <button class="chart-toggle-btn" onclick="toggleChart()">View Progression</button>
+        <button class="chart-toggle-btn" onclick="app.toggleChart()">View Progression</button>
       </div>
 
       <div class="chart-container" id="chartContainer">
-        <button class="chart-toggle-btn" onclick="toggleChart()" style="width: 100%; margin-bottom: 16px;">Hide Progression</button>
+        <button class="chart-toggle-btn" onclick="app.toggleChart()" style="width: 100%; margin-bottom: 16px;">Hide Progression</button>
         <h3 class="section-title">Progression</h3>
         <canvas id="progressChart"></canvas>
       </div>
@@ -476,7 +480,7 @@
 
     <div id="addWorkoutScreen" class="screen">
       <div class="top-bar">
-        <button class="secondary-btn" onclick="backToSplit()">Back</button>
+        <button class="secondary-btn" onclick="app.backToSplit()">Back</button>
       </div>
 
       <h2 class="section-title">Add Workout</h2>
@@ -487,451 +491,440 @@
       </div>
 
       <div class="button-row">
-        <button class="save-btn" onclick="addWorkout()">Save Workout</button>
+        <button onclick="app.addWorkout()">Save Workout</button>
       </div>
     </div>
 
   </div>
 
   <script>
-    let currentSplit = '';
-    let currentExercise = '';
-    let chartInstance = null;
-    let editingIndex = null;
+    const app = {
+      currentSplit: '',
+      currentExercise: '',
+      chartInstance: null,
+      editingIndex: null,
 
-    const defaultData = {
-      Push: [
-        { name: 'Bench Press', entries: [], pr: { volume: 0, sets: 0, reps: 0, weight: 0 } },
-        { name: 'Incline Dumbbell Press', entries: [], pr: { volume: 0, sets: 0, reps: 0, weight: 0 } },
-        { name: 'Shoulder Press', entries: [], pr: { volume: 0, sets: 0, reps: 0, weight: 0 } }
-      ],
-      Pull: [
-        { name: 'Lat Pulldown', entries: [], pr: { volume: 0, sets: 0, reps: 0, weight: 0 } },
-        { name: 'Barbell Row', entries: [], pr: { volume: 0, sets: 0, reps: 0, weight: 0 } },
-        { name: 'Hammer Curl', entries: [], pr: { volume: 0, sets: 0, reps: 0, weight: 0 } }
-      ],
-      Legs: [
-        { name: 'Leg Press', entries: [], pr: { volume: 0, sets: 0, reps: 0, weight: 0 } },
-        { name: 'Romanian Deadlift', entries: [], pr: { volume: 0, sets: 0, reps: 0, weight: 0 } },
-        { name: 'Leg Extension', entries: [], pr: { volume: 0, sets: 0, reps: 0, weight: 0 } }
-      ]
-    };
+      defaultData: {
+        Push: [
+          { name: 'Bench Press', entries: [], pr: { volume: 0, sets: 0, reps: 0, weight: 0 } },
+          { name: 'Incline Dumbbell Press', entries: [], pr: { volume: 0, sets: 0, reps: 0, weight: 0 } },
+          { name: 'Shoulder Press', entries: [], pr: { volume: 0, sets: 0, reps: 0, weight: 0 } }
+        ],
+        Pull: [
+          { name: 'Lat Pulldown', entries: [], pr: { volume: 0, sets: 0, reps: 0, weight: 0 } },
+          { name: 'Barbell Row', entries: [], pr: { volume: 0, sets: 0, reps: 0, weight: 0 } },
+          { name: 'Hammer Curl', entries: [], pr: { volume: 0, sets: 0, reps: 0, weight: 0 } }
+        ],
+        Legs: [
+          { name: 'Leg Press', entries: [], pr: { volume: 0, sets: 0, reps: 0, weight: 0 } },
+          { name: 'Romanian Deadlift', entries: [], pr: { volume: 0, sets: 0, reps: 0, weight: 0 } },
+          { name: 'Leg Extension', entries: [], pr: { volume: 0, sets: 0, reps: 0, weight: 0 } }
+        ]
+      },
 
-    function getData() {
-      const saved = localStorage.getItem('khalilProjectData');
-      if (saved) return JSON.parse(saved);
+      getData() {
+        const saved = localStorage.getItem('khalilProjectData');
+        if (saved) return JSON.parse(saved);
+        localStorage.setItem('khalilProjectData', JSON.stringify(this.defaultData));
+        return this.defaultData;
+      },
 
-      localStorage.setItem('khalilProjectData', JSON.stringify(defaultData));
-      return defaultData;
-    }
+      saveData(data) {
+        localStorage.setItem('khalilProjectData', JSON.stringify(data));
+      },
 
-    function saveData(data) {
-      localStorage.setItem('khalilProjectData', JSON.stringify(data));
-    }
-
-    function showScreen(id) {
-      document.querySelectorAll('.screen').forEach(screen => {
-        screen.classList.remove('active');
-      });
-
-      document.getElementById(id).classList.add('active');
-    }
-
-    function toggleChart() {
-      const chartContainer = document.getElementById('chartContainer');
-      chartContainer.classList.toggle('active');
-      if (chartContainer.classList.contains('active')) {
-        setTimeout(() => {
-          renderChart();
-        }, 100);
-      }
-    }
-
-    function openSplit(split) {
-      currentSplit = split;
-      document.getElementById('splitTitle').textContent = split + ' Workouts';
-      renderWorkoutList();
-      showScreen('splitScreen');
-    }
-
-    function renderWorkoutList() {
-      const data = getData();
-      const container = document.getElementById('workoutList');
-      container.innerHTML = '';
-
-      data[currentSplit].forEach(workout => {
-        const lastEntry = workout.entries[workout.entries.length - 1];
-        const currentPR = workout.pr;
-        const lastDate = lastEntry ? lastEntry.date : 'Never';
-
-        const card = document.createElement('div');
-        card.className = 'exercise-card';
-        card.onclick = () => openExercise(workout.name);
-
-        let prHtml = '';
-        if (currentPR && currentPR.volume > 0) {
-          prHtml = `
-            <div class="pr-display">
-              <div class="pr-label">Personal Record</div>
-              <div class="pr-value">${currentPR.weight} lbs</div>
-              <div class="pr-details">${currentPR.sets}×${currentPR.reps} • ${currentPR.volume.toLocaleString()} vol</div>
-            </div>
-          `;
-        }
-
-        card.innerHTML = `
-          ${prHtml}
-          <div class="last-date">Last: ${lastDate}</div>
-          <h3>${workout.name}</h3>
-          <p class="last-volume">
-            ${lastEntry
-              ? `${calculateVolume(lastEntry.sets).toLocaleString()} lbs`
-              : 'No entries yet'}
-          </p>
-        `;
-
-        container.appendChild(card);
-      });
-    }
-
-    function openExercise(name) {
-      currentExercise = name;
-      editingIndex = null;
-      document.getElementById('exerciseTitle').textContent = name;
-      document.getElementById('setContainer').innerHTML = '';
-      document.getElementById('chartContainer').classList.remove('active');
-      document.getElementById('entryFormTitle').textContent = 'New Entry';
-      document.getElementById('formButtons').innerHTML = '<button class="save-btn" onclick="saveWorkoutEntry()">Save Entry</button>';
-
-      addSetRow();
-      renderPRDisplay();
-      renderHistory();
-
-      showScreen('exerciseScreen');
-    }
-
-    function renderPRDisplay() {
-      const data = getData();
-      const exercise = data[currentSplit].find(w => w.name === currentExercise);
-      const container = document.getElementById('prDisplay');
-
-      if (!exercise.pr || exercise.pr.volume === 0) {
-        container.innerHTML = '';
-        return;
-      }
-
-      container.innerHTML = `
-        <div class="pr-display">
-          <div class="pr-label">Personal Record</div>
-          <div class="pr-value">${exercise.pr.weight} lbs</div>
-          <div class="pr-details">${exercise.pr.sets}×${exercise.pr.reps} • ${exercise.pr.volume.toLocaleString()} vol</div>
-        </div>
-      `;
-    }
-
-    function addSetRow() {
-      const row = document.createElement('div');
-      row.className = 'set-row';
-
-      row.innerHTML = `
-        <input type="number" placeholder="Sets" class="sets" />
-        <input type="number" placeholder="Reps" class="reps" />
-        <input type="number" placeholder="Weight" class="weight" />
-      `;
-
-      document.getElementById('setContainer').appendChild(row);
-    }
-
-    function saveWorkoutEntry() {
-      const rows = document.querySelectorAll('.set-row');
-      const sets = [];
-
-      rows.forEach(row => {
-        const setCount = row.querySelector('.sets').value;
-        const reps = row.querySelector('.reps').value;
-        const weight = row.querySelector('.weight').value;
-
-        if (setCount && reps && weight) {
-          sets.push({
-            sets: Number(setCount),
-            reps: Number(reps),
-            weight: Number(weight)
-          });
-        }
-      });
-
-      if (sets.length === 0) return;
-
-      const data = getData();
-      const exercise = data[currentSplit].find(w => w.name === currentExercise);
-      const volume = calculateVolume({ sets });
-
-      const maxWeight = Math.max(...sets.map(s => s.weight));
-      const maxWeightSet = sets.find(s => s.weight === maxWeight);
-
-      if (!exercise.pr || volume > exercise.pr.volume) {
-        exercise.pr = {
-          volume: volume,
-          sets: maxWeightSet.sets,
-          reps: maxWeightSet.reps,
-          weight: maxWeightSet.weight
-        };
-      }
-
-      if (editingIndex !== null) {
-        exercise.entries[editingIndex] = {
-          date: exercise.entries[editingIndex].date,
-          timestamp: exercise.entries[editingIndex].timestamp,
-          sets
-        };
-        editingIndex = null;
-      } else {
-        exercise.entries.unshift({
-          date: new Date().toLocaleDateString(),
-          timestamp: Date.now(),
-          sets
+      showScreen(id) {
+        document.querySelectorAll('.screen').forEach(screen => {
+          screen.classList.remove('active');
         });
-      }
+        document.getElementById(id).classList.add('active');
+      },
 
-      saveData(data);
+      openSplit(split) {
+        this.currentSplit = split;
+        document.getElementById('splitTitle').textContent = split + ' Workouts';
+        this.renderWorkoutList();
+        this.showScreen('splitScreen');
+      },
 
-      document.getElementById('setContainer').innerHTML = '';
-      addSetRow();
-      document.getElementById('entryFormTitle').textContent = 'New Entry';
-      document.getElementById('formButtons').innerHTML = '<button class="save-btn" onclick="saveWorkoutEntry()">Save Entry</button>';
+      renderWorkoutList() {
+        const data = this.getData();
+        const container = document.getElementById('workoutList');
+        container.innerHTML = '';
 
-      renderPRDisplay();
-      renderHistory();
-      renderWorkoutList();
-    }
+        data[this.currentSplit].forEach(workout => {
+          const lastEntry = workout.entries[workout.entries.length - 1];
+          const currentPR = workout.pr;
+          const lastDate = lastEntry ? lastEntry.date : 'Never';
 
-    function editEntry(index) {
-      const data = getData();
-      const exercise = data[currentSplit].find(w => w.name === currentExercise);
-      const entry = exercise.entries[index];
+          const card = document.createElement('div');
+          card.className = 'exercise-card';
+          card.onclick = () => this.openExercise(workout.name);
 
-      editingIndex = index;
+          let prHtml = '';
+          if (currentPR && currentPR.volume > 0) {
+            prHtml = `
+              <div class="pr-display">
+                <div class="pr-label">Personal Record</div>
+                <div class="pr-value">${currentPR.weight} lbs</div>
+                <div class="pr-details">${currentPR.sets}×${currentPR.reps} • ${currentPR.volume.toLocaleString()} vol</div>
+              </div>
+            `;
+          }
 
-      document.getElementById('setContainer').innerHTML = '';
-      entry.sets.forEach(set => {
+          card.innerHTML = `
+            ${prHtml}
+            <div class="last-date">Last: ${lastDate}</div>
+            <h3>${workout.name}</h3>
+            <p class="last-volume">
+              ${lastEntry ? `${this.calculateVolume(lastEntry.sets).toLocaleString()} lbs` : 'No entries yet'}
+            </p>
+          `;
+
+          container.appendChild(card);
+        });
+      },
+
+      openExercise(name) {
+        this.currentExercise = name;
+        this.editingIndex = null;
+        document.getElementById('exerciseTitle').textContent = name;
+        document.getElementById('setContainer').innerHTML = '';
+        document.getElementById('chartContainer').classList.remove('active');
+        document.getElementById('entryFormTitle').textContent = 'New Entry';
+        document.getElementById('formButtons').innerHTML = '<button onclick="app.saveWorkoutEntry()">Save Entry</button>';
+
+        this.addSetRow();
+        this.renderPRDisplay();
+        this.renderHistory();
+
+        this.showScreen('exerciseScreen');
+      },
+
+      renderPRDisplay() {
+        const data = this.getData();
+        const exercise = data[this.currentSplit].find(w => w.name === this.currentExercise);
+        const container = document.getElementById('prDisplay');
+
+        if (!exercise.pr || exercise.pr.volume === 0) {
+          container.innerHTML = '';
+          return;
+        }
+
+        container.innerHTML = `
+          <div class="pr-display">
+            <div class="pr-label">Personal Record</div>
+            <div class="pr-value">${exercise.pr.weight} lbs</div>
+            <div class="pr-details">${exercise.pr.sets}×${exercise.pr.reps} • ${exercise.pr.volume.toLocaleString()} vol</div>
+          </div>
+        `;
+      },
+
+      addSetRow() {
         const row = document.createElement('div');
         row.className = 'set-row';
         row.innerHTML = `
-          <input type="number" placeholder="Sets" class="sets" value="${set.sets}" />
-          <input type="number" placeholder="Reps" class="reps" value="${set.reps}" />
-          <input type="number" placeholder="Weight" class="weight" value="${set.weight}" />
+          <input type="number" placeholder="Sets" class="sets" />
+          <input type="number" placeholder="Reps" class="reps" />
+          <input type="number" placeholder="Weight" class="weight" />
         `;
         document.getElementById('setContainer').appendChild(row);
-      });
+      },
 
-      document.getElementById('entryFormTitle').textContent = 'Edit Entry';
-      document.getElementById('formButtons').innerHTML = `
-        <button class="cancel-btn" onclick="cancelEdit()">Cancel</button>
-        <button class="update-btn" onclick="saveWorkoutEntry()">Update Entry</button>
-      `;
+      calculateVolume(sets) {
+        return sets.reduce((total, set) => {
+          return total + (set.sets * set.reps * set.weight);
+        }, 0);
+      },
 
-      window.scrollTo(0, 0);
-    }
+      saveWorkoutEntry() {
+        const rows = document.querySelectorAll('.set-row');
+        const sets = [];
 
-    function cancelEdit() {
-      editingIndex = null;
-      document.getElementById('setContainer').innerHTML = '';
-      addSetRow();
-      document.getElementById('entryFormTitle').textContent = 'New Entry';
-      document.getElementById('formButtons').innerHTML = '<button class="save-btn" onclick="saveWorkoutEntry()">Save Entry</button>';
-    }
+        rows.forEach(row => {
+          const setCount = row.querySelector('.sets').value;
+          const reps = row.querySelector('.reps').value;
+          const weight = row.querySelector('.weight').value;
 
-    function deleteEntry(index) {
-      if (confirm('Delete this workout entry?')) {
-        const data = getData();
-        const exercise = data[currentSplit].find(w => w.name === currentExercise);
-        exercise.entries.splice(index, 1);
+          if (setCount && reps && weight) {
+            sets.push({
+              sets: Number(setCount),
+              reps: Number(reps),
+              weight: Number(weight)
+            });
+          }
+        });
 
-        // Recalculate PR
-        if (exercise.entries.length === 0) {
-          exercise.pr = { volume: 0, sets: 0, reps: 0, weight: 0 };
+        if (sets.length === 0) return;
+
+        const data = this.getData();
+        const exercise = data[this.currentSplit].find(w => w.name === this.currentExercise);
+        const volume = this.calculateVolume(sets);
+
+        const maxWeight = Math.max(...sets.map(s => s.weight));
+        const maxWeightSet = sets.find(s => s.weight === maxWeight);
+
+        if (!exercise.pr || volume > exercise.pr.volume) {
+          exercise.pr = {
+            volume: volume,
+            sets: maxWeightSet.sets,
+            reps: maxWeightSet.reps,
+            weight: maxWeightSet.weight
+          };
+        }
+
+        if (this.editingIndex !== null) {
+          exercise.entries[this.editingIndex] = {
+            date: exercise.entries[this.editingIndex].date,
+            timestamp: exercise.entries[this.editingIndex].timestamp,
+            sets
+          };
+          this.editingIndex = null;
         } else {
-          exercise.pr = { volume: 0, sets: 0, reps: 0, weight: 0 };
-          exercise.entries.forEach(entry => {
-            const volume = calculateVolume(entry.sets);
-            const maxWeight = Math.max(...entry.sets.map(s => s.weight));
-            const maxWeightSet = entry.sets.find(s => s.weight === maxWeight);
-            
-            if (volume > exercise.pr.volume) {
-              exercise.pr = {
-                volume: volume,
-                sets: maxWeightSet.sets,
-                reps: maxWeightSet.reps,
-                weight: maxWeightSet.weight
-              };
-            }
+          exercise.entries.unshift({
+            date: new Date().toLocaleDateString(),
+            timestamp: Date.now(),
+            sets
           });
         }
 
-        saveData(data);
-        renderPRDisplay();
-        renderHistory();
-        renderWorkoutList();
-      }
-    }
+        this.saveData(data);
 
-    function renderHistory() {
-      const data = getData();
-      const exercise = data[currentSplit].find(w => w.name === currentExercise);
-      const container = document.getElementById('historyContainer');
-      const latestText = document.getElementById('latestVolume');
+        document.getElementById('setContainer').innerHTML = '';
+        this.addSetRow();
+        document.getElementById('entryFormTitle').textContent = 'New Entry';
+        document.getElementById('formButtons').innerHTML = '<button onclick="app.saveWorkoutEntry()">Save Entry</button>';
 
-      container.innerHTML = '';
+        this.renderPRDisplay();
+        this.renderHistory();
+        this.renderWorkoutList();
+      },
 
-      if (exercise.entries.length === 0) {
-        latestText.textContent = 'No entries yet';
-        container.innerHTML = '<div class="empty-state">No workout history available.</div>';
-        return;
-      }
+      editEntry(index) {
+        const data = this.getData();
+        const exercise = data[this.currentSplit].find(w => w.name === this.currentExercise);
+        const entry = exercise.entries[index];
 
-      const latestVolume = calculateVolume(exercise.entries[0].sets);
-      latestText.textContent = `Latest Volume: ${latestVolume.toLocaleString()} lbs`;
+        this.editingIndex = index;
 
-      exercise.entries.forEach((entry, index) => {
-        const volume = calculateVolume(entry.sets);
-        const maxWeight = Math.max(...entry.sets.map(s => s.weight));
-        const maxWeightSet = entry.sets.find(s => s.weight === maxWeight);
+        document.getElementById('setContainer').innerHTML = '';
+        entry.sets.forEach(set => {
+          const row = document.createElement('div');
+          row.className = 'set-row';
+          row.innerHTML = `
+            <input type="number" placeholder="Sets" class="sets" value="${set.sets}" />
+            <input type="number" placeholder="Reps" class="reps" value="${set.reps}" />
+            <input type="number" placeholder="Weight" class="weight" value="${set.weight}" />
+          `;
+          document.getElementById('setContainer').appendChild(row);
+        });
 
-        const card = document.createElement('div');
-        card.className = 'history-card';
-
-        card.innerHTML = `
-          <div class="history-header">
-            <div class="history-left">
-              <div class="history-date">${entry.date}</div>
-              <div class="history-detail">${maxWeightSet.sets}×${maxWeightSet.reps} @ ${maxWeightSet.weight} lbs</div>
-            </div>
-            <div class="history-volume">
-              <div class="history-volume-label">VOL</div>
-              <div>${volume.toLocaleString()}</div>
-            </div>
-          </div>
-          <div class="history-buttons">
-            <button class="edit-btn" onclick="editEntry(${index})">Edit</button>
-            <button class="delete-history-btn" onclick="deleteEntry(${index})">Delete</button>
-          </div>
+        document.getElementById('entryFormTitle').textContent = 'Edit Entry';
+        document.getElementById('formButtons').innerHTML = `
+          <button class="cancel-btn" onclick="app.cancelEdit()">Cancel</button>
+          <button class="update-btn" onclick="app.saveWorkoutEntry()">Update Entry</button>
         `;
 
-        container.appendChild(card);
-      });
-    }
+        window.scrollTo(0, 0);
+      },
 
-    function calculateVolume(entry) {
-      return entry.sets.reduce((total, set) => {
-        return total + (set.sets * set.reps * set.weight);
-      }, 0);
-    }
+      cancelEdit() {
+        this.editingIndex = null;
+        document.getElementById('setContainer').innerHTML = '';
+        this.addSetRow();
+        document.getElementById('entryFormTitle').textContent = 'New Entry';
+        document.getElementById('formButtons').innerHTML = '<button onclick="app.saveWorkoutEntry()">Save Entry</button>';
+      },
 
-    function renderChart() {
-      const data = getData();
-      const exercise = data[currentSplit].find(w => w.name === currentExercise);
-      const ctx = document.getElementById('progressChart');
+      deleteEntry(index) {
+        if (confirm('Delete this workout entry?')) {
+          const data = this.getData();
+          const exercise = data[this.currentSplit].find(w => w.name === this.currentExercise);
+          exercise.entries.splice(index, 1);
 
-      const entries = [...exercise.entries].reverse();
-
-      const labels = entries.map(entry => {
-        const date = new Date(entry.timestamp);
-        return (date.getMonth() + 1) + '/' + date.getDate();
-      });
-      const volumes = entries.map(entry => calculateVolume(entry));
-
-      if (chartInstance) {
-        chartInstance.destroy();
-      }
-
-      chartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [{
-            data: volumes,
-            borderColor: '#000000',
-            backgroundColor: 'rgba(0,0,0,0.08)',
-            tension: 0.3,
-            borderWidth: 2.5,
-            fill: true,
-            pointRadius: 4,
-            pointBackgroundColor: '#000000',
-            pointBorderColor: '#ffffff',
-            pointBorderWidth: 2
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: true,
-          plugins: {
-            legend: {
-              display: false
-            }
-          },
-          scales: {
-            x: {
-              ticks: {
-                color: '#666',
-                font: {
-                  family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                  size: 12
-                }
-              },
-              grid: {
-                display: false
+          if (exercise.entries.length === 0) {
+            exercise.pr = { volume: 0, sets: 0, reps: 0, weight: 0 };
+          } else {
+            exercise.pr = { volume: 0, sets: 0, reps: 0, weight: 0 };
+            exercise.entries.forEach(entry => {
+              const volume = this.calculateVolume(entry.sets);
+              const maxWeight = Math.max(...entry.sets.map(s => s.weight));
+              const maxWeightSet = entry.sets.find(s => s.weight === maxWeight);
+              
+              if (volume > exercise.pr.volume) {
+                exercise.pr = {
+                  volume: volume,
+                  sets: maxWeightSet.sets,
+                  reps: maxWeightSet.reps,
+                  weight: maxWeightSet.weight
+                };
               }
+            });
+          }
+
+          this.saveData(data);
+          this.renderPRDisplay();
+          this.renderHistory();
+          this.renderWorkoutList();
+        }
+      },
+
+      renderHistory() {
+        const data = this.getData();
+        const exercise = data[this.currentSplit].find(w => w.name === this.currentExercise);
+        const container = document.getElementById('historyContainer');
+        const latestText = document.getElementById('latestVolume');
+
+        container.innerHTML = '';
+
+        if (exercise.entries.length === 0) {
+          latestText.textContent = 'No entries yet';
+          container.innerHTML = '<div class="empty-state">No workout history available.</div>';
+          return;
+        }
+
+        const latestVolume = this.calculateVolume(exercise.entries[0].sets);
+        latestText.textContent = `Latest Volume: ${latestVolume.toLocaleString()} lbs`;
+
+        exercise.entries.forEach((entry, index) => {
+          const volume = this.calculateVolume(entry.sets);
+          const maxWeight = Math.max(...entry.sets.map(s => s.weight));
+          const maxWeightSet = entry.sets.find(s => s.weight === maxWeight);
+
+          const card = document.createElement('div');
+          card.className = 'history-card';
+
+          card.innerHTML = `
+            <div class="history-header">
+              <div class="history-left">
+                <div class="history-date">${entry.date}</div>
+                <div class="history-detail">${maxWeightSet.sets}×${maxWeightSet.reps} @ ${maxWeightSet.weight} lbs</div>
+              </div>
+              <div class="history-volume">
+                <div class="history-volume-label">VOL</div>
+                <div class="history-volume-value">${volume.toLocaleString()}</div>
+              </div>
+            </div>
+            <div class="history-buttons">
+              <button class="edit-btn" onclick="app.editEntry(${index})">Edit</button>
+              <button class="delete-history-btn" onclick="app.deleteEntry(${index})">Delete</button>
+            </div>
+          `;
+
+          container.appendChild(card);
+        });
+      },
+
+      toggleChart() {
+        const chartContainer = document.getElementById('chartContainer');
+        chartContainer.classList.toggle('active');
+        if (chartContainer.classList.contains('active')) {
+          setTimeout(() => {
+            this.renderChart();
+          }, 100);
+        }
+      },
+
+      renderChart() {
+        const data = this.getData();
+        const exercise = data[this.currentSplit].find(w => w.name === this.currentExercise);
+        const ctx = document.getElementById('progressChart');
+
+        const entries = [...exercise.entries].reverse();
+
+        const labels = entries.map(entry => {
+          const date = new Date(entry.timestamp);
+          return (date.getMonth() + 1) + '/' + date.getDate();
+        });
+        const volumes = entries.map(entry => this.calculateVolume(entry.sets));
+
+        if (this.chartInstance) {
+          this.chartInstance.destroy();
+        }
+
+        this.chartInstance = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [{
+              data: volumes,
+              borderColor: '#000000',
+              backgroundColor: 'rgba(0,0,0,0.08)',
+              tension: 0.3,
+              borderWidth: 2.5,
+              fill: true,
+              pointRadius: 4,
+              pointBackgroundColor: '#000000',
+              pointBorderColor: '#ffffff',
+              pointBorderWidth: 2
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+              legend: { display: false }
             },
-            y: {
-              beginAtZero: true,
-              ticks: {
-                color: '#666',
-                font: {
-                  family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                  size: 12
-                }
+            scales: {
+              x: {
+                ticks: {
+                  color: '#666',
+                  font: {
+                    family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                    size: 12
+                  }
+                },
+                grid: { display: false }
               },
-              grid: {
-                color: '#f0f0f0',
-                drawBorder: false
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  color: '#666',
+                  font: {
+                    family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                    size: 12
+                  }
+                },
+                grid: {
+                  color: '#f0f0f0',
+                  drawBorder: false
+                }
               }
             }
           }
-        }
-      });
-    }
+        });
+      },
 
-    function showAddWorkout() {
-      document.getElementById('newWorkoutName').value = '';
-      showScreen('addWorkoutScreen');
-    }
+      showAddWorkout() {
+        document.getElementById('newWorkoutName').value = '';
+        this.showScreen('addWorkoutScreen');
+      },
 
-    function addWorkout() {
-      const name = document.getElementById('newWorkoutName').value.trim();
+      addWorkout() {
+        const name = document.getElementById('newWorkoutName').value.trim();
+        if (!name) return;
 
-      if (!name) return;
+        const data = this.getData();
+        data[this.currentSplit].push({
+          name,
+          entries: [],
+          pr: { volume: 0, sets: 0, reps: 0, weight: 0 }
+        });
 
-      const data = getData();
+        this.saveData(data);
+        this.renderWorkoutList();
+        this.showScreen('splitScreen');
+      },
 
-      data[currentSplit].push({
-        name,
-        entries: [],
-        pr: { volume: 0, sets: 0, reps: 0, weight: 0 }
-      });
+      goHome() {
+        this.showScreen('homeScreen');
+      },
 
-      saveData(data);
-      renderWorkoutList();
-      showScreen('splitScreen');
-    }
-
-    function goHome() {
-      showScreen('homeScreen');
-    }
-
-    function backToSplit() {
-      renderWorkoutList();
-      showScreen('splitScreen');
-    }
+      backToSplit() {
+        this.renderWorkoutList();
+        this.showScreen('splitScreen');
+      }
+    };
   </script>
 </body>
 </html>
