@@ -11,7 +11,7 @@
   <style>
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 
-    html { overflow-x:hidden; }
+    html, body { overflow-x:hidden; overscroll-behavior-x:none; }
 
     body {
       background:#fff; color:#000;
@@ -19,11 +19,9 @@
       min-height:100vh;
       padding:env(safe-area-inset-top) 18px env(safe-area-inset-bottom) 18px;
       display:flex; justify-content:center;
-      overflow-x:hidden;
       width:100%;
-      position:relative;
     }
-    .app { width:100%; max-width:460px; padding-bottom:70px; }
+    .app { width:100%; max-width:460px; padding-bottom:70px; overflow-x:hidden; }
 
     /* Title */
     .title { text-align:center; margin-top:24px; margin-bottom:28px; }
@@ -84,7 +82,7 @@
     .drag-handle {
       display:flex; align-items:center; justify-content:center;
       width:0; flex-shrink:0; cursor:grab; opacity:0;
-      touch-action:none; overflow:hidden;
+      touch-action:pan-y; overflow:hidden;
       transition:width 0.2s ease, opacity 0.2s ease;
       -webkit-user-select:none; user-select:none; pointer-events:none;
     }
@@ -956,52 +954,149 @@ const app = {
 
   /* ═══════════════════════════════════
      DRAG & DROP
+     Long-press (300ms) on handle activates drag.
+     Before activation, touch scrolls normally.
   ═══════════════════════════════════ */
   _drag(handle,row,index){
-    const onStart=(cx,cy)=>{
-      const d=this.drag; d.sourceIndex=index; d.active=true;
-      const r=row.getBoundingClientRect(); d.offsetX=cx-r.left; d.offsetY=cy-r.top;
-      const g=row.cloneNode(true); g.className='drag-ghost'; g.style.cssText=`width:${r.width}px;left:${r.left}px;top:${r.top}px;`;
-      document.body.appendChild(g); d.ghost=g; row.classList.add('dragging'); document.body.style.userSelect='none';
+    let pressTimer=null, startX=0, startY=0;
+
+    const activate=(cx,cy)=>{
+      // Fired after long-press threshold — start the drag ghost
+      const d=this.drag;
+      d.sourceIndex=index; d.active=true;
+      const r=row.getBoundingClientRect();
+      d.offsetX=cx-r.left; d.offsetY=cy-r.top;
+      const g=row.cloneNode(true);
+      g.className='drag-ghost';
+      g.style.cssText=`width:${r.width}px;left:${r.left}px;top:${r.top}px;`;
+      document.body.appendChild(g);
+      d.ghost=g;
+      row.classList.add('dragging');
+      document.body.style.overflow='hidden'; // lock scroll while dragging
     };
+
     const onMove=(cx,cy)=>{
-      const d=this.drag; if(!d.active) return;
-      d.ghost.style.left=(cx-d.offsetX)+'px'; d.ghost.style.top=(cy-d.offsetY)+'px';
-      const c=document.getElementById('workoutList'), inds=[...c.querySelectorAll('.drop-indicator')];
+      const d=this.drag;
+      if(!d.active) return;
+      d.ghost.style.left=(cx-d.offsetX)+'px';
+      d.ghost.style.top=(cy-d.offsetY)+'px';
+
+      const container=document.getElementById('workoutList');
+      const rows=[...container.querySelectorAll('.exercise-row')];
+      const inds=[...container.querySelectorAll('.drop-indicator')];
+
+      // Hide all indicators
       inds.forEach(i=>i.classList.remove('visible'));
-      let best=null,bd=Infinity;
-      inds.forEach(ind=>{ const r=ind.getBoundingClientRect(), dist=Math.abs(cy-(r.top+r.height/2)); if(dist<bd){bd=dist;best=ind;} });
-      if(best){ best.classList.add('visible'); d.currentTarget=parseInt(best.dataset.index); }
+
+      // Find target slot by comparing cy against each row's midpoint.
+      // We use rows (always visible, always have real getBoundingClientRect)
+      // NOT the drop-indicator elements (which are hidden and return y=0).
+      let targetSlot = 0; // default: before first item
+      for(let i=0;i<rows.length;i++){
+        const r=rows[i].getBoundingClientRect();
+        const mid=r.top + r.height/2;
+        if(cy > mid) targetSlot = i+1; // cursor is below midpoint → slot after this row
+      }
+
+      // Show the indicator at that slot
+      const targetInd = inds.find(ind=>parseInt(ind.dataset.index)===targetSlot);
+      if(targetInd) targetInd.classList.add('visible');
+      d.currentTarget = targetSlot;
     };
+
     const onEnd=()=>{
-      const d=this.drag; if(!d.active) return; d.active=false;
+      clearTimeout(pressTimer); pressTimer=null;
+      const d=this.drag;
+      document.body.style.overflow='';
+      if(!d.active){ d.sourceIndex=null; d.currentTarget=null; return; }
+      d.active=false;
       if(d.ghost){ d.ghost.remove(); d.ghost=null; }
-      const c=document.getElementById('workoutList');
-      c.querySelectorAll('.drop-indicator').forEach(i=>i.classList.remove('visible'));
-      c.querySelectorAll('.exercise-row').forEach(r=>r.classList.remove('dragging'));
-      document.body.style.userSelect='';
-      if(d.currentTarget!==null&&d.sourceIndex!==null){
-        const t=d.currentTarget;
-        if(t!==d.sourceIndex&&t!==d.sourceIndex+1){
+      const container=document.getElementById('workoutList');
+      container.querySelectorAll('.drop-indicator').forEach(i=>i.classList.remove('visible'));
+      container.querySelectorAll('.exercise-row').forEach(r=>r.classList.remove('dragging'));
+
+      // Reorder: target indicator index tells us WHERE to insert.
+      // Drop indicators: index 0 = before item 0, index n = after last item.
+      // After splicing out the dragged item the array shrinks by 1,
+      // so if target > sourceIndex we subtract 1 to get the correct slot.
+      if(d.currentTarget!==null && d.sourceIndex!==null){
+        const src=d.sourceIndex, tgt=d.currentTarget;
+        // Drop indicators: 0=before first item, n=after last item
+        // Compute where item would land after removal
+        const insertAt = tgt > src ? tgt - 1 : tgt;
+        // Only skip if item ends up in exactly the same position
+        if(insertAt !== src){
           const data=this.getData(), items=data[this.currentSplit];
-          const [moved]=items.splice(d.sourceIndex,1);
-          const insertAt=t>d.sourceIndex?t-1:t;
-          items.splice(insertAt,0,moved);
-          this.saveData(data); this.renderList();
+          const [moved]=items.splice(src,1);
+          items.splice(insertAt, 0, moved);
+          this.saveData(data);
+          this.renderList();
           if(this.editMode) document.getElementById('workoutList').classList.add('edit-mode');
         }
       }
       d.sourceIndex=null; d.currentTarget=null;
     };
-    handle.addEventListener('touchstart',e=>{const t=e.touches[0];onStart(t.clientX,t.clientY);},{passive:false});
-    handle.addEventListener('touchmove', e=>{if(this.drag.active){e.preventDefault();}const t=e.touches[0];onMove(t.clientX,t.clientY);},{passive:false});
-    handle.addEventListener('touchend',  ()=>onEnd());
-    handle.addEventListener('touchcancel',()=>onEnd());
-    handle.addEventListener('mousedown',e=>{
-      e.preventDefault(); onStart(e.clientX,e.clientY);
+
+    // ── Touch ──
+    // Strategy: touchstart on handle starts a 300ms long-press timer.
+    // During that window the finger can scroll freely (passive listener,
+    // no preventDefault). If the finger moves more than 8px we cancel
+    // the timer entirely. Only after 300ms of holding still do we activate
+    // the drag, attach a document-level non-passive touchmove to block
+    // scroll, and track the drag. This means normal scrolling is NEVER
+    // blocked unless a deliberate hold-drag is in progress.
+    let liveX=0, liveY=0;
+
+    const docTouchMove = e=>{
+      if(!this.drag.active) return;
+      e.preventDefault();
+      const t=e.touches[0];
+      liveX=t.clientX; liveY=t.clientY;
+      onMove(t.clientX, t.clientY);
+    };
+
+    const docTouchEnd = ()=>{
+      document.removeEventListener('touchmove', docTouchMove);
+      document.removeEventListener('touchend',  docTouchEnd);
+      document.removeEventListener('touchcancel', docTouchEnd);
+      onEnd();
+    };
+
+    handle.addEventListener('touchstart', e=>{
+      const t=e.touches[0];
+      startX=liveX=t.clientX; startY=liveY=t.clientY;
+      pressTimer=setTimeout(()=>{
+        // Long-press fired — activate drag and take over touch handling
+        activate(liveX, liveY);
+        document.addEventListener('touchmove',   docTouchMove,  {passive:false});
+        document.addEventListener('touchend',    docTouchEnd,   {passive:true});
+        document.addEventListener('touchcancel', docTouchEnd,   {passive:true});
+      }, 300);
+    }, {passive:true});
+
+    // Lightweight passive move just to track position & cancel if scrolling
+    handle.addEventListener('touchmove', e=>{
+      const t=e.touches[0];
+      liveX=t.clientX; liveY=t.clientY;
+      // Cancel long-press if finger moves significantly (user is scrolling)
+      if(!this.drag.active){
+        const dx=t.clientX-startX, dy=t.clientY-startY;
+        if(Math.sqrt(dx*dx+dy*dy)>8){ clearTimeout(pressTimer); pressTimer=null; }
+      }
+    }, {passive:true});
+
+    handle.addEventListener('touchend',   ()=>{ clearTimeout(pressTimer); pressTimer=null; if(!this.drag.active) onEnd(); });
+    handle.addEventListener('touchcancel',()=>{ clearTimeout(pressTimer); pressTimer=null; if(!this.drag.active) onEnd(); });
+
+    // ── Mouse ──
+    handle.addEventListener('mousedown', e=>{
+      e.preventDefault();
+      startX=e.clientX; startY=e.clientY;
+      activate(e.clientX,e.clientY);
       const mm=ev=>onMove(ev.clientX,ev.clientY);
-      const mu=()=>{onEnd();window.removeEventListener('mousemove',mm);window.removeEventListener('mouseup',mu);};
-      window.addEventListener('mousemove',mm); window.addEventListener('mouseup',mu);
+      const mu=()=>{ onEnd(); window.removeEventListener('mousemove',mm); window.removeEventListener('mouseup',mu); };
+      window.addEventListener('mousemove',mm);
+      window.addEventListener('mouseup',mu);
     });
   },
 };
